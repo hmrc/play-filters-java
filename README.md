@@ -1,10 +1,10 @@
-play-filters
-============
+play-filters-java
+=================
 
-[![Build Status](https://travis-ci.org/hmrc/play-filters.svg)](https://travis-ci.org/hmrc/play-filters) [ ![Download](https://api.bintray.com/packages/hmrc/releases/play-filters/images/download.svg) ](https://bintray.com/hmrc/releases/play-filters/_latestVersion)
+[![Build Status](https://travis-ci.org/hmrc/play-filters-java.svg)](https://travis-ci.org/hmrc/play-filters-java) [ ![Download](https://api.bintray.com/packages/hmrc/releases/play-filters-java/images/download.svg) ](https://bintray.com/hmrc/releases/play-filters-java/_latestVersion)
 
 
-A library containing Play Framework filters to be used by frontend apps and microservices.
+A library containing Play Framework Java filters to be used by frontend apps and microservices.
 
 ## Adding to your service
 
