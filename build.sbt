@@ -28,6 +28,7 @@ val compileDependencies = Seq(
 val testDependencies = Seq(
   "uk.gov.hmrc" %% "hmrctest" % "1.7.0",
   "org.pegdown" % "pegdown" % "1.6.0",
+  "org.scala-lang.modules" %% "scala-java8-compat" % "0.3.0",
   "com.typesafe.play" %% "play-test" % PlayVersion.current
 ).map(d => d % Test)
 

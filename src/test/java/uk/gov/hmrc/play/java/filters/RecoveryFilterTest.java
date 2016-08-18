@@ -19,28 +19,21 @@ package uk.gov.hmrc.play.java.filters;
 import akka.dispatch.Futures;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
-import org.scalatest.concurrent.*;
-import org.scalatest.time.Millis$;
-import org.scalatest.time.Span;
 import play.Logger;
 import play.api.mvc.*;
 import play.api.test.FakeRequest;
-import play.test.WithApplication;
-import scala.Function1;
 import scala.compat.java8.JFunction0;
 import scala.compat.java8.JFunction1;
 import scala.concurrent.Future;
 import uk.gov.hmrc.play.http.HttpException;
 import uk.gov.hmrc.play.http.NotFoundException;
+import uk.gov.hmrc.play.java.ScalaFutures;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class RecoveryFilterTest extends WithApplication implements ScalaFutures {
-
-    private PatienceConfig patienceConfig = new PatienceConfig(scaled(Span.apply(150, Millis$.MODULE$)), scaled(Span.apply(15, Millis$.MODULE$)));
-
+public class RecoveryFilterTest extends ScalaFutures {
     @Test
     public void recoverFailedActionsWith404StatusCodes() {
         Action mockAction = mock(Action.class, (Answer) invocation -> {
@@ -70,67 +63,5 @@ public class RecoveryFilterTest extends WithApplication implements ScalaFutures 
         JFunction1<Throwable, Boolean> fn = ex -> ex instanceof HttpException;
 
         assertThat(whenReady(convertScalaFuture(fResult.failed()), fn, patienceConfig()), is(true));
-    }
-
-    @Override
-    public Span scaled(Span span) {
-        return ScaledTimeSpans$class.scaled(this, span);
-    }
-
-    @Override
-    public <T> FutureConcept<T> convertScalaFuture(Future<T> scalaFuture) {
-        return ScalaFutures$class.convertScalaFuture(this, scalaFuture);
-    }
-
-    @Override
-    public PatienceConfig patienceConfig() {
-        return patienceConfig;
-    }
-
-    public AbstractPatienceConfiguration.PatienceConfig$ PatienceConfig() {
-        return new AbstractPatienceConfiguration.PatienceConfig$();
-    }
-
-    @Override
-    public double spanScaleFactor() {
-        return ScaledTimeSpans$class.spanScaleFactor(this);
-    }
-
-    @Override
-    public Timeout timeout(Span value) {
-        return PatienceConfiguration$class.timeout(this, value);
-    }
-
-    @Override
-    public Interval interval(Span value) {
-        return PatienceConfiguration$class.interval(this, value);
-    }
-
-    @Override
-    public <T, U> U whenReady(FutureConcept<T> future, Timeout timeout, Interval interval, Function1<T, U> fun, PatienceConfig config) {
-        return (U)Futures$class.whenReady(this, future, timeout, interval, fun, config);
-    }
-
-    @Override
-    public <T, U> U whenReady(FutureConcept<T> future, Timeout timeout, Function1<T, U> fun, PatienceConfig config) {
-        return (U)Futures$class.whenReady(this, future, timeout, fun, config);
-    }
-
-    @Override
-    public <T, U> U whenReady(FutureConcept<T> future, Interval interval, Function1<T, U> fun, PatienceConfig config) {
-        return (U)Futures$class.whenReady(this, future, interval, fun, config);
-    }
-
-    @Override
-    public <T, U> U whenReady(FutureConcept<T> future, Function1<T, U> fun, PatienceConfig config) {
-        return (U)Futures$class.whenReady(this, future, fun, config);
-    }
-
-    public PatienceConfig org$scalatest$concurrent$PatienceConfiguration$$defaultPatienceConfig() {
-        return patienceConfig;
-    }
-
-    public void org$scalatest$concurrent$PatienceConfiguration$_setter_$org$scalatest$concurrent$PatienceConfiguration$$defaultPatienceConfig_$eq(PatienceConfig patienceConfig) {
-        this.patienceConfig = patienceConfig;
     }
 }
