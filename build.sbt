@@ -22,13 +22,14 @@ val plugins = SbtAutoBuildPlugin && SbtGitVersioning
 
 val compileDependencies = Seq(
   "com.typesafe.play" %% "play" % PlayVersion.current % "provided",
+  "org.scala-lang.modules" %% "scala-java8-compat" % "0.3.0",
   "uk.gov.hmrc" %% "play-filters" % "4.8.0"
 )
 
 val testDependencies = Seq(
   "uk.gov.hmrc" %% "hmrctest" % "1.7.0",
   "org.pegdown" % "pegdown" % "1.6.0",
-  "org.scala-lang.modules" %% "scala-java8-compat" % "0.3.0",
+  "com.novocode" % "junit-interface" % "0.10",
   "com.typesafe.play" %% "play-test" % PlayVersion.current
 ).map(d => d % Test)
 

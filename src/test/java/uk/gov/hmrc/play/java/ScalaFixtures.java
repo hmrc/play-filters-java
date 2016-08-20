@@ -16,16 +16,42 @@
 
 package uk.gov.hmrc.play.java;
 
+import org.mockito.stubbing.Answer;
 import org.scalatest.concurrent.*;
 import org.scalatest.time.Millis$;
 import org.scalatest.time.Span;
+import play.Logger;
+import play.api.mvc.*;
 import play.test.WithApplication;
 import scala.Function1;
+import scala.compat.java8.JFunction0;
 import scala.concurrent.Future;
 
-public abstract class ScalaFutures extends WithApplication implements org.scalatest.concurrent.ScalaFutures {
+import static org.mockito.Mockito.mock;
+
+public abstract class ScalaFixtures extends WithApplication implements ScalaFutures {
 
     private PatienceConfig patienceConfig = new PatienceConfig(scaled(Span.apply(150, Millis$.MODULE$)), scaled(Span.apply(15, Millis$.MODULE$)));
+
+    protected Action generateAction(Result result) {
+        return generateAction(akka.dispatch.Futures.successful(result));
+    }
+
+    protected Action generateAction(Future<Result> result) {
+        Action mockAction = mock(Action.class, (Answer) invocation -> {
+            Logger.info("Invoking answer with {} - {}", invocation, invocation.getArguments()[0].getClass());
+
+            if(invocation.getMethod().getName().equals("apply")) {
+                JFunction0<Future<Result>> fn = () -> result;
+                return ActionBuilder$class.async(Action$.MODULE$, fn).apply((RequestHeader) invocation.getArguments()[0]);
+            } else {
+                return invocation.callRealMethod();
+            }
+        });
+
+        return mockAction;
+    }
+
 
     @Override
     public Span scaled(Span span) {

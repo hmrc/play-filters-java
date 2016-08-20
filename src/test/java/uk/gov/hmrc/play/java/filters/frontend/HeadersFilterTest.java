@@ -16,22 +16,21 @@
 
 package uk.gov.hmrc.play.java.filters.frontend;
 
-import org.scalactic.Equivalence;
-import play.api.mvc.RequestHeader;
+import org.junit.Test;
 
-public class RequestHeaderEquivalence /*extends Equivalence<RequestHeader>*/ {
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
-/*
-  def areEquivalent(h1: RequestHeader, h2: RequestHeader): Boolean = {
-    h1.id == h2.id &&
-    h1.tags == h2.tags &&
-    h1.uri == h2.uri &&
-    h1.path == h2.path &&
-    h1.method == h2.method &&
-    h1.version == h2.version &&
-    h1.queryString == h2.queryString &&
-    h1.headers.toMap == h2.headers.toMap &&
-    h1.remoteAddress == h2.remoteAddress
-  }
-*/
+public class HeadersFilterTest {
+    @Test
+    public void testDelegationOfXRequestIDHeader() {
+        HeadersFilter filter = new HeadersFilter();
+        assertThat(filter.xRequestId(), is("X-Request-ID"));
+    }
+
+    @Test
+    public void testDelegationOfXRequestTimestampHeader() {
+        HeadersFilter filter = new HeadersFilter();
+        assertThat(filter.xRequestTimestamp(), is("X-Request-Timestamp"));
+    }
 }

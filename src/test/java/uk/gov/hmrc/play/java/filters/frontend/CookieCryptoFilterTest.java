@@ -16,133 +16,74 @@
 
 package uk.gov.hmrc.play.java.filters.frontend;
 
-import ch.qos.logback.classic.Level;
+import akka.dispatch.Futures;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import uk.gov.hmrc.play.test.UnitSpec;
+import play.api.mvc.*;
+import play.api.test.FakeRequest;
+import scala.concurrent.Future;
+import uk.gov.hmrc.play.java.ScalaFixtures;
 
-import static org.mockito.Matchers.any;
+import static java.util.Collections.singletonList;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.*;
+import static scala.collection.JavaConversions.asScalaBuffer;
 
-public class CookieCryptoFilterTest {
+/**
+ * Subset of parent project's tests to verify interactions.
+ */
+public class CookieCryptoFilterTest extends ScalaFixtures {
 
-/*
-  private trait Setup extends Results {
-    implicit val headerEquiv = RequestHeaderEquivalence
+    private String cookieName = "someCookieName";
+    private CookieCryptoFilter.Encrypter encrypter = mock(CookieCryptoFilter.Encrypter.class);
+    private CookieCryptoFilter.Decrypter decrypter = mock(CookieCryptoFilter.Decrypter.class);
+    private CookieCryptoFilter cookieCryptoFilter = new CookieCryptoFilter(cookieName, encrypter, decrypter);
+    private FakeRequest incomingRequest = FakeRequest.apply();
+    private Result okResult = Results$.MODULE$.Ok();
+    private Action mockAction = generateAction(Futures.successful(okResult));
 
-    val cookieName = "someCookieName"
-    val encryptedCookie = Cookie(cookieName, "encryptedValue")
-    val unencryptedCookie = encryptedCookie.copy(value = "decryptedValue")
-    val corruptEncryptedCookie = encryptedCookie.copy(value = "invalidEncryptedValue")
-    val emptyCookie = encryptedCookie.copy(value = "")
+    private Cookie encryptedCookie = Cookie.apply(cookieName, "encryptedValue", Cookie.apply$default$3(), Cookie.apply$default$4(), Cookie.apply$default$5(), Cookie.apply$default$6(), Cookie.apply$default$7());
+    private Cookie unencryptedCookie = Cookie.apply(cookieName, "decryptedValue", Cookie.apply$default$3(), Cookie.apply$default$4(), Cookie.apply$default$5(), Cookie.apply$default$6(), Cookie.apply$default$7());
+    private Cookie corruptEncryptedCookie = Cookie.apply(cookieName, "invalidEncryptedValue", Cookie.apply$default$3(), Cookie.apply$default$4(), Cookie.apply$default$5(), Cookie.apply$default$6(), Cookie.apply$default$7());
+    private Cookie emptyCookie = Cookie.apply(cookieName, "", Cookie.apply$default$3(), Cookie.apply$default$4(), Cookie.apply$default$5(), Cookie.apply$default$6(), Cookie.apply$default$7());
 
-    val normalCookie1 = Cookie("AnotherCookie1", "normalValue1")
-    val normalCookie2 = Cookie("AnotherCookie2", "normalValue2")
-
-    val resultFromAction: Result = Ok
-
-    lazy val action = {
-      val mockAction = mock[(RequestHeader) => Future[Result]]
-      val outgoingResponse = Future.successful(resultFromAction)
-      when(mockAction.apply(any())).thenReturn(outgoingResponse)
-      mockAction
+    @Before
+    public void setUp() {
+        when(encrypter.apply("decryptedValue")).thenReturn("encryptedValue");
+        when(decrypter.apply("encryptedValue")).thenReturn("decryptedValue");
+        when(decrypter.apply("invalidEncryptedValue")).thenThrow(new RuntimeException("Couldn't decrypt that"));
     }
 
-    def filter = new CookieCryptoFilter {
-      override val cookieName = Setup.this.cookieName
-      protected val encrypter = encrypt _
-      protected val decrypter = decrypt _
-
-      private def encrypt(plainValue: String) = plainValue match {
-        case "decryptedValue" => "encryptedValue"
-        case _ => "notfound"
-      }
-
-      private def decrypt(encryptedValue: String) = encryptedValue match {
-        case "encryptedValue" => "decryptedValue"
-        case _ => throw new Exception("Couldn't decrypt that")
-      }
+    private RequestHeader requestPassedToAction() {
+        ArgumentCaptor<RequestHeader> updatedRequest = ArgumentCaptor.forClass(RequestHeader.class);
+        verify(mockAction).apply((Object) updatedRequest.capture());
+        return updatedRequest.getValue();
     }
 
-    def requestPassedToAction: RequestHeader = {
-      val updatedRequest = ArgumentCaptor.forClass(classOf[RequestHeader])
-      verify(action).apply(updatedRequest.capture())
-      updatedRequest.getValue
-    }
-  }
-
-  "During request pre-processing, the filter" should {
-
-    "do nothing with no cookie header in the request" in new Setup {
-      val incomingRequest = FakeRequest()
-      filter(action)(incomingRequest)
-      requestPassedToAction should ===(incomingRequest)
+    @Test
+    public void testConstruction() {
+        assertThat(cookieCryptoFilter.decrypter(), is(decrypter));
+        assertThat(cookieCryptoFilter.encrypter(), is(encrypter));
     }
 
-    "decrypt the cookie" in new Setup {
-      val incomingRequest = FakeRequest().withCookies(encryptedCookie)
-      filter(action)(incomingRequest)
-      requestPassedToAction should ===(FakeRequest().withCookies(unencryptedCookie))
+    @Test
+    public void verifyThatEncryptedCookieIsDecryptedAndValueIsPassedToAction() {
+        cookieCryptoFilter.apply(mockAction).apply(incomingRequest.withCookies(asScalaBuffer(singletonList(encryptedCookie))));
+        assertThat(requestPassedToAction().cookies().get(cookieName).get().value(), is(unencryptedCookie.value()));
     }
 
-    "leave empty cookies unchanged" in new Setup {
-      val incomingRequest = FakeRequest().withCookies(emptyCookie)
-      filter(action)(incomingRequest)
-      requestPassedToAction should ===(incomingRequest)
+    @Test
+    public void verifyThatCorruptEncryptedCookieIsNotPassedToAction() {
+        cookieCryptoFilter.apply(mockAction).apply(incomingRequest.withCookies(asScalaBuffer(singletonList(corruptEncryptedCookie))));
+        assertThat(requestPassedToAction().cookies().get(cookieName).isDefined(), is(false));
     }
 
-    "leave other cookies alone if our cookie is not present" in new Setup {
-      val incomingRequest = FakeRequest().withCookies(normalCookie1, normalCookie2)
-      filter(action)(incomingRequest)
-      requestPassedToAction should ===(incomingRequest)
+    @Test
+    public void verifyThatCookieIsEncryptednReturn() {
+        Future<Result> fResult = cookieCryptoFilter.apply(generateAction(Futures.successful(okResult.withCookies(asScalaBuffer(singletonList(unencryptedCookie)))))).apply(incomingRequest).run();
+        Result result = convertScalaFuture(fResult).futureValue(patienceConfig());
+        assertThat(result, is(okResult.withCookies(asScalaBuffer(singletonList(encryptedCookie)))));
     }
-
-    "leave other cookies alone when ours is present" in new Setup {
-      val incomingRequest = FakeRequest().withCookies(normalCookie1, encryptedCookie, normalCookie2)
-      filter(action)(incomingRequest)
-      requestPassedToAction should ===(FakeRequest().withCookies(unencryptedCookie, normalCookie1, normalCookie2))
-    }
-
-    "remove the cookie header if the decryption fails and there are no other cookies" in new Setup {
-      val incomingRequest = FakeRequest().withCookies(corruptEncryptedCookie)
-      filter(action)(incomingRequest)
-      requestPassedToAction should ===(FakeRequest())
-    }
-
-    "remove the cookie (but leave other cookies intact) if with the decryption fails" in new Setup {
-      val incomingRequest = FakeRequest().withCookies(normalCookie1, corruptEncryptedCookie, normalCookie2)
-      withCaptureOfLoggingFrom(Logger) { logEvents =>
-        filter(action)(incomingRequest)
-        requestPassedToAction should === (FakeRequest().withCookies(normalCookie1, normalCookie2))
-        logEvents().filter(_.getLevel == Level.WARN).loneElement.toString should include("Could not decrypt cookie")
-      }
-    }
-  }
-
-  "During result post-processing, the filter" should {
-
-    "do nothing with the result if there are no cookies" in new Setup {
-      filter(action)(FakeRequest()).futureValue should be(resultFromAction)
-    }
-
-    "do nothing with the result if there are cookies, but not our cookie" in new Setup {
-      override val resultFromAction = Ok.withCookies(normalCookie1, normalCookie2)
-      filter(action)(FakeRequest()).futureValue should be(resultFromAction)
-    }
-
-    "encrypt the cookie value before returning it" in new Setup {
-      override val resultFromAction = Ok.withCookies(unencryptedCookie)
-      filter(action)(FakeRequest()).futureValue should be(Ok.withCookies(encryptedCookie))
-    }
-
-    "encrypt the cookie value before returning it, leaving other cookies unchanged" in new Setup {
-      override val resultFromAction = Ok.withCookies(normalCookie1, unencryptedCookie, normalCookie2)
-      filter(action)(FakeRequest()).futureValue should be(Ok.withCookies(normalCookie1, normalCookie2, encryptedCookie))
-    }
-
-    "do nothing with the cookie value if it is empty" in new Setup {
-      override val resultFromAction = Ok.withCookies(emptyCookie)
-      filter(action)(FakeRequest()).futureValue should be(Ok.withCookies(emptyCookie))
-    }
-  }
-*/
-
 }

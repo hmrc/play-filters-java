@@ -27,22 +27,16 @@ import scala.compat.java8.JFunction1;
 import scala.concurrent.Future;
 import uk.gov.hmrc.play.http.HttpException;
 import uk.gov.hmrc.play.http.NotFoundException;
-import uk.gov.hmrc.play.java.ScalaFutures;
+import uk.gov.hmrc.play.java.ScalaFixtures;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class RecoveryFilterTest extends ScalaFutures {
+public class RecoveryFilterTest extends ScalaFixtures {
     @Test
     public void recoverFailedActionsWith404StatusCodes() {
-        Action mockAction = mock(Action.class, (Answer) invocation -> {
-            Logger.info("Invoking answer with {} - {}", invocation, invocation.getArguments()[0].getClass());
-
-            JFunction0<Future<Result>> fn = () -> Futures.failed(new NotFoundException("Not found exception"));
-            return ActionBuilder$class.async(Action$.MODULE$, fn).apply((RequestHeader) invocation.getArguments()[0]);
-        });
-
+        Action mockAction = generateAction(Futures.failed(new NotFoundException("Not found exception")));
         Future<Result> fResult = new RecoveryFilter().apply(mockAction).apply(FakeRequest.apply()).run();
         Result result = convertScalaFuture(fResult).futureValue(patienceConfig());
 
@@ -51,15 +45,8 @@ public class RecoveryFilterTest extends ScalaFutures {
 
     @Test
     public void doNothingForActionsFailedWithOtherStatusCodes() {
-        Action mockAction = mock(Action.class, (Answer) invocation -> {
-            Logger.info("Invoking answer with {} - {}", invocation, invocation.getArguments()[0].getClass());
-
-            JFunction0<Future<Result>> fn = () -> Futures.failed(new HttpException("Internal server error", 500));
-            return ActionBuilder$class.async(Action$.MODULE$, fn).apply((RequestHeader) invocation.getArguments()[0]);
-        });
-
+        Action mockAction = generateAction(Futures.failed(new HttpException("Internal server error", 500)));
         Future<Result> fResult = new RecoveryFilter().apply(mockAction).apply(FakeRequest.apply()).run();
-
         JFunction1<Throwable, Boolean> fn = ex -> ex instanceof HttpException;
 
         assertThat(whenReady(convertScalaFuture(fResult.failed()), fn, patienceConfig()), is(true));

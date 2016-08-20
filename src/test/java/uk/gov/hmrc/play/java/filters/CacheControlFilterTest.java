@@ -16,96 +16,53 @@
 
 package uk.gov.hmrc.play.java.filters;
 
-import org.mockito.ArgumentCaptor;
+import akka.dispatch.Futures;
+import org.junit.Test;
+import org.mockito.stubbing.Answer;
+import play.Logger;
+import play.api.mvc.*;
+import play.api.test.FakeRequest;
+import scala.Tuple2;
+import scala.collection.JavaConversions;
+import scala.compat.java8.JFunction0;
+import scala.concurrent.Future;
+import uk.gov.hmrc.play.java.ScalaFixtures;
 
-import static uk.gov.hmrc.play.java.filters.CacheControlFilter.fromConfig;
+import java.util.Arrays;
+import java.util.List;
 
-public class CacheControlFilterTest {
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
-/*  private trait Setup extends Results {
+/**
+ * Exercise a sub-set of the parent class's tests to verify delegation works as expected.
+ */
+public class CacheControlFilterTest extends ScalaFixtures {
+    private CacheControlFilter cacheControlFilter = new CacheControlFilter(Arrays.asList("image/", "text/css", "application/javascript"));
+    private List<Tuple2<String, String>> headers = Arrays.asList(new Tuple2(play.api.http.HeaderNames$.MODULE$.CACHE_CONTROL(), "no-cache,no-store,max-age=0"));
+    private Result okResult = Results$.MODULE$.Ok();
 
-    val expectedCacheControlHeader = HeaderNames.CACHE_CONTROL -> "no-cache,no-store,max-age=0"
-
-    val resultFromAction: Result = Ok
-
-    val cacheControlFilter = new CacheControlFilter {
-      val cachableContentTypes: Seq[String] = Seq("image/", "text/css", "application/javascript")
+    @Test
+    public void addACacheControlHeaderIfThereIsNotOneAndTheResponseHasNoContentType() {
+        Result result = convertScalaFuture(cacheControlFilter.apply(generateAction(okResult)).apply(FakeRequest.apply()).run())
+                .futureValue(patienceConfig());
+        assertThat(result, is(okResult.withHeaders(JavaConversions.asScalaBuffer(headers))));
     }
 
-    lazy val action = {
-      val mockAction = mock[(RequestHeader) => Future[Result]]
-      val outgoingResponse = Future.successful(resultFromAction)
-      when(mockAction.apply(any())).thenReturn(outgoingResponse)
-      mockAction
+    @Test
+    public void addACacheControlHeaderIfThereIsNotOneAndTheResponseDoesNotHaveAnExcludedContentType() {
+        Result initialResultType = okResult.as("text/html");
+        Result result = convertScalaFuture(cacheControlFilter.apply(generateAction(initialResultType)).apply(FakeRequest.apply()).run())
+                .futureValue(patienceConfig());
+        assertThat(result, is(initialResultType.withHeaders(JavaConversions.asScalaBuffer(headers))));
     }
 
-    def requestPassedToAction = {
-      val updatedRequest = ArgumentCaptor.forClass(classOf[RequestHeader])
-      verify(action).apply(updatedRequest.capture())
-      updatedRequest.getValue
+    @Test
+    public void notAddACacheControlHeaderIfThereIsNotOneAndTheResponseIsAnExactMatchExcludedContentType() {
+        Result initialResultType = okResult.as("text/css");
+        Result result = convertScalaFuture(cacheControlFilter.apply(generateAction(initialResultType)).apply(FakeRequest.apply()).run())
+                .futureValue(patienceConfig());
+        assertThat(result, is(initialResultType));
     }
-  }
-
-  "During request pre-processing, the filter" should {
-
-    "do nothing, just pass on the request" in new Setup {
-      cacheControlFilter(action)(FakeRequest())
-      requestPassedToAction should === (FakeRequest())
-    }
-  }
-
-  "During result post-processing, the filter" should {
-
-    "add a cache-control header if there isn't one and the response has no content type" in new Setup {
-      cacheControlFilter(action)(FakeRequest()).futureValue should be(resultFromAction.withHeaders(expectedCacheControlHeader))
-    }
-
-    "add a cache-control header if there isn't one and the response does not have an excluded content type" in new Setup {
-      override val resultFromAction: Result = Ok.as("text/html")
-      cacheControlFilter(action)(FakeRequest()).futureValue should be(resultFromAction.withHeaders(expectedCacheControlHeader))
-    }
-
-    "not add a cache-control header if there isn't one but the response is an exact match for an excluded content type" in new Setup {
-      override val resultFromAction: Result = Ok.as("text/css")
-      cacheControlFilter(action)(FakeRequest()).futureValue should be(resultFromAction)
-    }
-
-    "not add a cache-control header if there isn't one but the response is an exact match for an mime part of an excluded content type" in new Setup {
-      override val resultFromAction: Result = Ok.as("text/css; charset=utf-8")
-      cacheControlFilter(action)(FakeRequest()).futureValue should be(resultFromAction)
-    }
-
-    "not add a cache-control header if there isn't one but the response is an exact match for an category of the mime part of an excluded content type" in new Setup {
-      override val resultFromAction: Result = Ok.as("image/png")
-      cacheControlFilter(action)(FakeRequest()).futureValue should be(resultFromAction)
-    }
-
-    "not add a cache-control header if there is no content type but the status is NOT MODIFIED" in new Setup {
-      override val resultFromAction: Result = NotModified
-      cacheControlFilter(action)(FakeRequest()).futureValue should be(resultFromAction)
-    }
-
-    "replace any existing cache-control header" in new Setup {
-      override val resultFromAction = Ok.withHeaders(HeaderNames.CACHE_CONTROL -> "someOtherValue")
-      cacheControlFilter(action)(FakeRequest()).futureValue should be(resultFromAction.withHeaders(expectedCacheControlHeader))
-    }
-
-    "leave any other headers alone" in new Setup {
-      override val resultFromAction = Ok.withHeaders(
-        "header1" -> "value1",
-        HeaderNames.CACHE_CONTROL -> "someOtherValue",
-        "header2" -> "value2")
-
-      cacheControlFilter(action)(FakeRequest()).futureValue should be(resultFromAction.withHeaders(expectedCacheControlHeader))
-    }
-  }
-
-  "Creating the filter from config" should {
-    "load the correct values" in new WithApplication(FakeApplication(additionalConfiguration = Map("caching" -> List("image/", "text/")))) {
-      fromConfig("caching").cachableContentTypes should be (List("image/", "text/"))
-    }
-    "throw an exception on missing config" in  {
-      an [RuntimeException] should be thrownBy CacheControlFilter.fromConfig("caching").cachableContentTypes
-    }
-  }*/
 }

@@ -16,10 +16,26 @@
 
 package uk.gov.hmrc.play.java.filters;
 
+import scala.collection.JavaConversions;
+import scala.collection.Seq;
 import uk.gov.hmrc.play.filters.CacheControlFilter$;
 
-public class CacheControlFilter {
+import java.util.List;
+
+public class CacheControlFilter extends uk.gov.hmrc.play.filters.CacheControlFilter {
+    private final List<String> cacheableContentTypes;
+
+    public CacheControlFilter(List<String> cacheableContentTypes) {
+        super();
+        this.cacheableContentTypes = cacheableContentTypes;
+    }
+
     public static uk.gov.hmrc.play.filters.CacheControlFilter fromConfig(String configKey) {
         return CacheControlFilter$.MODULE$.fromConfig(configKey);
+    }
+
+    @Override
+    public Seq<String> cachableContentTypes() {
+        return JavaConversions.asScalaBuffer(cacheableContentTypes);
     }
 }

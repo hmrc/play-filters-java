@@ -18,13 +18,45 @@ package uk.gov.hmrc.play.java.filters.frontend;
 
 import play.api.mvc.*;
 import scala.Function1;
+import scala.collection.JavaConversions;
 import scala.collection.Seq;
 import scala.concurrent.Future;
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector;
 import uk.gov.hmrc.play.filters.frontend.DeviceIdCookie$class;
 import uk.gov.hmrc.play.filters.frontend.DeviceIdFilter$class;
 
-public abstract class DeviceIdFilter implements uk.gov.hmrc.play.filters.frontend.DeviceIdFilter {
+import java.util.List;
+
+public class DeviceIdFilter implements uk.gov.hmrc.play.filters.frontend.DeviceIdFilter {
+
+    private final String appName;
+    private final String secret;
+    private final AuditConnector auditConnector;
+    private final List<String> previousSecrets;
+
+    public DeviceIdFilter(String appName, String secret, AuditConnector auditConnector, List<String> previousSecrets) {
+        this.appName = appName;
+        this.secret = secret;
+        this.auditConnector = auditConnector;
+        this.previousSecrets = previousSecrets;
+    }
+
+    public String secret() {
+        return secret;
+    }
+
+    public AuditConnector auditConnector() {
+        return auditConnector;
+    }
+
+    public String appName() {
+        return appName;
+    }
+
+    @Override
+    public Seq<String> previousSecrets() {
+        return JavaConversions.asScalaBuffer(previousSecrets);
+    }
 
     @Override
     public long getTimeStamp() {
@@ -62,27 +94,12 @@ public abstract class DeviceIdFilter implements uk.gov.hmrc.play.filters.fronten
     }
 
     @Override
-    public String secret() {
-        return null;
-    }
-
-    @Override
-    public Seq<String> previousSecrets() {
-        return null;
-    }
-
-    @Override
-    public AuditConnector auditConnector() {
-        return null;
-    }
-
-    @Override
-    public String appName() {
-        return null;
-    }
-
-    @Override
     public Future<Result> apply(Function1<RequestHeader, Future<Result>> next, RequestHeader rh) {
         return DeviceIdFilter$class.apply(this, next, rh);
+    }
+
+    // Scala required method
+    public uk.gov.hmrc.play.filters.frontend.DeviceIdFilter.CookeResult$ CookeResult() {
+        return new uk.gov.hmrc.play.filters.frontend.DeviceIdFilter.CookeResult$();
     }
 }

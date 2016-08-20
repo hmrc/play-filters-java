@@ -16,23 +16,9 @@
 
 package uk.gov.hmrc.play.java.filters.frontend;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import play.api.libs.iteratee.Input;
-import play.api.libs.iteratee.Iteratee;
-import play.api.mvc.EssentialAction;
-import uk.gov.hmrc.play.filters.frontend.SessionTimeoutWrapper;
+import uk.gov.hmrc.play.java.ScalaFixtures;
 
-abstract class DummyAction implements EssentialAction {
-
-/*
-  override def apply(rh: RequestHeader): Iteratee[Array[Byte], Result] = {
-    Done(Result(null, Enumerator.empty), Input.EOF)
-  }
-*/
-}
-
-public class CSRFExceptionsFilterTest {
+public class CSRFExceptionsFilterTest extends ScalaFixtures {
 
 /*
   private val now = () =>  DateTime.now().withZone(DateTimeZone.UTC)

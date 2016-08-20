@@ -17,19 +17,59 @@
 package uk.gov.hmrc.play.java.filters.frontend;
 
 
-import play.api.mvc.*;
+import play.api.mvc.EssentialAction;
+import play.api.mvc.Filter$class;
+import play.api.mvc.RequestHeader;
+import play.api.mvc.Result;
 import scala.Function1;
+import scala.compat.java8.JFunction1;
 import scala.concurrent.Future;
 import uk.gov.hmrc.play.filters.frontend.CookieCryptoFilter$class;
 
-public abstract class CookieCryptoFilter implements uk.gov.hmrc.play.filters.frontend.CookieCryptoFilter {
-  @Override
-  public EssentialAction apply(EssentialAction next) {
-    return Filter$class.apply(this, next);
-  }
+public class CookieCryptoFilter implements uk.gov.hmrc.play.filters.frontend.CookieCryptoFilter {
+    private JFunction1<String, String> decrypter;
+    private JFunction1<String, String> encrypter;
+    private String cookieName;
 
-  @Override
-  public Future<Result> apply(Function1<RequestHeader, Future<Result>> next, RequestHeader rh) {
-    return CookieCryptoFilter$class.apply(this, next, rh);
-  }
+    public CookieCryptoFilter(String cookieName, Encrypter encrypter, Decrypter decrypter) {
+        this.cookieName = cookieName;
+        this.decrypter = decrypter;
+        this.encrypter = encrypter;
+    }
+
+    @Override
+    public EssentialAction apply(EssentialAction next) {
+        return Filter$class.apply(this, next);
+    }
+
+    @Override
+    public Future<Result> apply(Function1<RequestHeader, Future<Result>> next, RequestHeader rh) {
+        return CookieCryptoFilter$class.apply(this, next, rh);
+    }
+
+    public String cookieName() {
+        return cookieName;
+    }
+
+    @Override
+    public Function1<String, String> encrypter() {
+        return encrypter;
+    }
+
+    @Override
+    public Function1<String, String> decrypter() {
+        return decrypter;
+    }
+
+    public interface Decrypter extends JFunction1<String, String> {
+        String apply(String val);
+    }
+
+    public interface Encrypter extends JFunction1<String, String> {
+        String apply(String val);
+    }
+
+    public void uk$gov$hmrc$play$filters$frontend$CookieCryptoFilter$_setter_$cookieName_$eq(java.lang.String cookieName) {
+        this.cookieName = cookieName;
+    }
 }
