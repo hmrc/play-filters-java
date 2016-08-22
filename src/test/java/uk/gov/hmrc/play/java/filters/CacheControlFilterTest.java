@@ -16,16 +16,12 @@
 
 package uk.gov.hmrc.play.java.filters;
 
-import akka.dispatch.Futures;
 import org.junit.Test;
-import org.mockito.stubbing.Answer;
-import play.Logger;
-import play.api.mvc.*;
+import play.api.mvc.Result;
+import play.api.mvc.Results$;
 import play.api.test.FakeRequest;
 import scala.Tuple2;
 import scala.collection.JavaConversions;
-import scala.compat.java8.JFunction0;
-import scala.concurrent.Future;
 import uk.gov.hmrc.play.java.ScalaFixtures;
 
 import java.util.Arrays;
@@ -33,7 +29,6 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
 
 /**
  * Exercise a sub-set of the parent class's tests to verify delegation works as expected.
