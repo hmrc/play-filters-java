@@ -13,7 +13,7 @@ Include the following dependency in your SBT build
 ```scala
 resolvers += Resolver.bintrayRepo("hmrc", "releases")
 
-libraryDependencies += "uk.gov.hmrc" %% "play-filters" % "[INSERT-VERSION]"
+libraryDependencies += "uk.gov.hmrc" %% "play-filters-java" % "[INSERT-VERSION]"
 ```
 
 ## License ##
