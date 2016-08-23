@@ -36,4 +36,6 @@ val testDependencies = Seq(
 libraryDependencies ++= compileDependencies
 libraryDependencies ++= testDependencies
 
+publishArtifact in (Test, packageBin) := true
+
 lazy val `play-filters-java` = project in file(".") enablePlugins plugins

@@ -21,6 +21,7 @@ import org.scalatest.concurrent.*;
 import org.scalatest.time.Millis$;
 import org.scalatest.time.Span;
 import play.Logger;
+import play.api.libs.iteratee.Iteratee;
 import play.api.mvc.*;
 import play.test.WithApplication;
 import scala.Function1;
@@ -32,6 +33,12 @@ import static org.mockito.Mockito.mock;
 public abstract class ScalaFixtures extends WithApplication implements ScalaFutures {
 
     private PatienceConfig patienceConfig = new PatienceConfig(scaled(Span.apply(150, Millis$.MODULE$)), scaled(Span.apply(15, Millis$.MODULE$)));
+
+    protected Result okResult = Results$.MODULE$.Ok();
+
+    protected Action generateActionWithOkResponse() {
+        return generateAction(okResult);
+    }
 
     protected Action generateAction(Result result) {
         return generateAction(akka.dispatch.Futures.successful(result));
@@ -52,6 +59,13 @@ public abstract class ScalaFixtures extends WithApplication implements ScalaFutu
         return mockAction;
     }
 
+    protected <T> T await(Iteratee<byte[], T> it) {
+        return await(it.run());
+    }
+
+    protected <T> T await(Future<T> scalaFuture) {
+        return convertScalaFuture(scalaFuture).futureValue(patienceConfig());
+    }
 
     @Override
     public Span scaled(Span span) {

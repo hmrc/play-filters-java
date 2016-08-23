@@ -36,7 +36,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class CacheControlFilterTest extends ScalaFixtures {
     private CacheControlFilter cacheControlFilter = new CacheControlFilter(Arrays.asList("image/", "text/css", "application/javascript"));
     private List<Tuple2<String, String>> headers = Arrays.asList(new Tuple2(play.api.http.HeaderNames$.MODULE$.CACHE_CONTROL(), "no-cache,no-store,max-age=0"));
-    private Result okResult = Results$.MODULE$.Ok();
 
     @Test
     public void addACacheControlHeaderIfThereIsNotOneAndTheResponseHasNoContentType() {
