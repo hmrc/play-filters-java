@@ -16,19 +16,27 @@
 
 package uk.gov.hmrc.play.java;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.scalatest.concurrent.*;
 import org.scalatest.time.Millis$;
 import org.scalatest.time.Span;
+import play.GlobalSettings;
 import play.Logger;
 import play.api.libs.iteratee.Iteratee;
 import play.api.mvc.*;
+import play.test.FakeApplication;
+import play.test.Helpers;
 import play.test.WithApplication;
 import scala.Function1;
 import scala.compat.java8.JFunction0;
 import scala.concurrent.Future;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public abstract class ScalaFixtures extends WithApplication implements ScalaFutures {
 
@@ -57,6 +65,16 @@ public abstract class ScalaFixtures extends WithApplication implements ScalaFutu
         });
 
         return mockAction;
+    }
+
+    protected RequestHeader captureRequest(Action action) {
+        ArgumentCaptor<RequestHeader> rh = ArgumentCaptor.forClass(RequestHeader.class);
+        verify(action).apply((Object)rh.capture());
+        return rh.getValue();
+    }
+
+    protected FakeApplication fakeApplication(GlobalSettings global, Map<String, Object> additionalConfig) {
+        return new FakeApplication(new java.io.File("."), Helpers.class.getClassLoader(), additionalConfig, new ArrayList<>(), global);
     }
 
     protected <T> T await(Iteratee<byte[], T> it) {
