@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.play.java;
 
+import org.apache.commons.collections.map.HashedMap;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.scalatest.concurrent.*;
@@ -33,6 +34,7 @@ import scala.compat.java8.JFunction0;
 import scala.concurrent.Future;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.mockito.Mockito.mock;
@@ -71,6 +73,18 @@ public abstract class ScalaFixtures extends WithApplication implements ScalaFutu
         ArgumentCaptor<RequestHeader> rh = ArgumentCaptor.forClass(RequestHeader.class);
         verify(action).apply((Object)rh.capture());
         return rh.getValue();
+    }
+
+    protected FakeApplication fakeApplication() {
+        return fakeApplication(new GlobalSettings());
+    }
+
+    protected FakeApplication fakeApplication(GlobalSettings global) {
+        return fakeApplication(global, additionalProperties());
+    }
+
+    protected Map<String, Object> additionalProperties() {
+        return new HashMap<>();
     }
 
     protected FakeApplication fakeApplication(GlobalSettings global, Map<String, Object> additionalConfig) {

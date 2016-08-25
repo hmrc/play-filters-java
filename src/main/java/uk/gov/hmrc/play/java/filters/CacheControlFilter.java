@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.play.java.filters;
 
+import play.Logger;
+import play.Play;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 import uk.gov.hmrc.play.filters.CacheControlFilter$;
@@ -23,11 +25,18 @@ import uk.gov.hmrc.play.filters.CacheControlFilter$;
 import java.util.List;
 
 public class CacheControlFilter extends uk.gov.hmrc.play.filters.CacheControlFilter {
-    private final List<String> cacheableContentTypes;
+    private static List<String> cacheableContentTypes = null;
 
-    public CacheControlFilter(List<String> cacheableContentTypes) {
+    public CacheControlFilter() {
+        this("caching.allowedContentTypes");
+    }
+
+    public CacheControlFilter(String configKey) {
         super();
-        this.cacheableContentTypes = cacheableContentTypes;
+        if(cacheableContentTypes == null) {
+            cacheableContentTypes = Play.application().configuration().getStringList(configKey);
+            Logger.info("Will allow caching of content types matching: {}", cacheableContentTypes);
+        }
     }
 
     public static uk.gov.hmrc.play.filters.CacheControlFilter fromConfig(String configKey) {

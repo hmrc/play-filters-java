@@ -37,9 +37,7 @@ public class RecoveryFilterTest extends ScalaFixtures {
     @Test
     public void recoverFailedActionsWith404StatusCodes() {
         Action mockAction = generateAction(Futures.failed(new NotFoundException("Not found exception")));
-        Future<Result> fResult = new RecoveryFilter().apply(mockAction).apply(FakeRequest.apply()).run();
-        Result result = convertScalaFuture(fResult).futureValue(patienceConfig());
-
+        Result result = await(new RecoveryFilter().apply(mockAction).apply(FakeRequest.apply()));
         assertThat(result.header().status(), is(404));
     }
 
