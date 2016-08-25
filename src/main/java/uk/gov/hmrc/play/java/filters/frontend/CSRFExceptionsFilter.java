@@ -16,22 +16,20 @@
 
 package uk.gov.hmrc.play.java.filters.frontend;
 
-import play.api.mvc.EssentialAction;
-import play.api.mvc.Filter;
-import play.api.mvc.RequestHeader;
-import play.api.mvc.Result;
+import play.api.mvc.*;
 import scala.Function1;
 import scala.concurrent.Future;
-import uk.gov.hmrc.play.filters.frontend.CSRFExceptionsFilter$;
+
+import static uk.gov.hmrc.play.filters.frontend.CSRFExceptionsFilter$.MODULE$;
 
 public class CSRFExceptionsFilter implements Filter {
-  @Override
-  public Future<Result> apply(Function1<RequestHeader, Future<Result>> f, RequestHeader rh) {
-    return CSRFExceptionsFilter$.MODULE$.apply(f, rh);
-  }
+    @Override
+    public Future<Result> apply(Function1<RequestHeader, Future<Result>> f, RequestHeader rh) {
+        return f.apply(MODULE$.filteredHeaders(rh, MODULE$.filteredHeaders$default$2()));
+    }
 
-  @Override
-  public EssentialAction apply(EssentialAction next) {
-    return CSRFExceptionsFilter$.MODULE$.apply(next);
-  }
+    @Override
+    public EssentialAction apply(EssentialAction next) {
+        return Filter$class.apply(this, next);
+    }
 }

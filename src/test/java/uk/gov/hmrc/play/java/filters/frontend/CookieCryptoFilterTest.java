@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import play.api.mvc.*;
 import play.api.test.FakeRequest;
-import scala.concurrent.Future;
 import uk.gov.hmrc.play.java.ScalaFixtures;
 
 import static java.util.Collections.singletonList;
@@ -82,8 +81,7 @@ public class CookieCryptoFilterTest extends ScalaFixtures {
 
     @Test
     public void verifyThatCookieIsEncryptednReturn() {
-        Future<Result> fResult = cookieCryptoFilter.apply(generateAction(Futures.successful(okResult.withCookies(asScalaBuffer(singletonList(unencryptedCookie)))))).apply(incomingRequest).run();
-        Result result = convertScalaFuture(fResult).futureValue(patienceConfig());
+        Result result = await(cookieCryptoFilter.apply(generateAction(Futures.successful(okResult.withCookies(asScalaBuffer(singletonList(unencryptedCookie)))))).apply(incomingRequest));
         assertThat(result, is(okResult.withCookies(asScalaBuffer(singletonList(encryptedCookie)))));
     }
 }
